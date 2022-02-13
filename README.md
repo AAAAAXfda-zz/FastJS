@@ -1,10 +1,8 @@
-# [![](https://i.imgur.com/rb8oPur.png)](http://turbo.github.io)
+Fast.js is a small library that makes it easier to perform complex calculations that can be done in parallel. The actual calculation performed (the *kernel* executed) uses the GPU for execution. This enables you to work on an array of values all at once.
 
-turbo.js is a small library that makes it easier to perform complex calculations that can be done in parallel. The actual calculation performed (the *kernel* executed) uses the GPU for execution. This enables you to work on an array of values all at once.
+Fast.js is compatible with all browsers (even IE when not using ES6 template strings) and most desktop and mobile GPUs.
 
-turbo.js is compatible with all browsers (even IE when not using ES6 template strings) and most desktop and mobile GPUs.
-
-**For a live demo and short intro, please visit [turbo.github.io](http://turbo.github.io).**
+**For a live demo and short intro, please visit [Fast.github.io](http://Fast.github.io).**
 
 ![](https://i.imgur.com/BiiQSzP.png)
 
@@ -12,37 +10,37 @@ turbo.js is compatible with all browsers (even IE when not using ES6 template st
 
 For this example, which can also be found at the aforementioned website, we are going to perform a simple calculation on a big-ish array of values.
 
-First, include turbo.js in your site:
+First, include Fast.js in your site:
 
 ```html
-<script src="https://turbo.github.io/js/turbo.js"></script>
+<script src="https://Fast.github.io/js/Fast.js"></script>
 ```
 
-or pull [`turbojs`](https://www.npmjs.com/package/turbojs) via npm to use it in your project.
+or pull [`FastJS`](https://www.npmjs.com/package/FastJS) via npm to use it in your project.
 
-turbo.js only has two functions that can be called by your code. Both are contained within the `turbojs` object. If this object is not initialized, something went wrong. So the first step is to check for turbo.js support. You can optionally check for exceptions thrown by turbo.js, which will provide further details on the error.
+Fast.js only has two functions that can be called by your code. Both are contained within the `FastJS` object. If this object is not initialized, something went wrong. So the first step is to check for Fast.js support. You can optionally check for exceptions thrown by Fast.js, which will provide further details on the error.
 
 ```js
-if (turbojs) {
+if (FastJS) {
   // yay
 }
 ```
 
-Now we need some memory. Because data has to be transferred to and from GPU and system memory, we want to reduce the overhead this copy operation creates. To do this, turbo.js provides the `alloc` function. This will reserve memory on the GPU and in your browser. JavaScript can access and change contents of allocated memory by accessing the `.data` sub-array of a variable that contains allocated memory.
+Now we need some memory. Because data has to be transferred to and from GPU and system memory, we want to reduce the overhead this copy operation creates. To do this, Fast.js provides the `alloc` function. This will reserve memory on the GPU and in your browser. JavaScript can access and change contents of allocated memory by accessing the `.data` sub-array of a variable that contains allocated memory.
 
-For both turbo.js and JavaScript, the allocated memory is strictly typed and represents a one-dimensional array of 32bit IEEE floating-point values. Thus, the `.data` sub-array is a standard JavaScript [`Float32Array`](https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/Float32Array) object. After allocation, you can interact with this array however you want, except for changing it's size. Doing so will result in undefined behavior.
+For both Fast.js and JavaScript, the allocated memory is strictly typed and represents a one-dimensional array of 32bit IEEE floating-point values. Thus, the `.data` sub-array is a standard JavaScript [`Float32Array`](https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/Float32Array) object. After allocation, you can interact with this array however you want, except for changing it's size. Doing so will result in undefined behavior.
 
 ```js
-if (turbojs) {
-  var foo = turbojs.alloc(1e6);
+if (FastJS) {
+  var foo = FastJS.alloc(1e6);
 }
 ```
 
 We now have an array with 1,000,000 elements. Let's fill it with some data.
 
 ```js
-if (turbojs) {
-  var foo = turbojs.alloc(1e6);
+if (FastJS) {
+  var foo = FastJS.alloc(1e6);
 
   for (var i = 0; i < 1e6; i++) foo.data[i] = i;
 
@@ -54,13 +52,13 @@ if (turbojs) {
 Running this, the console should now display `[0, 1, 2, 3, 4]`. Now for our simple calculation: Multiplying each value by `nFactor` and printing the results:
 
 ```js
-if (turbojs) {
-  var foo = turbojs.alloc(1e6);
+if (FastJS) {
+  var foo = FastJS.alloc(1e6);
   var nFactor = 4;
 
   for (var i = 0; i < 1e6; i++) foo.data[i] = i;
 
-  turbojs.run(foo, `void main(void) {
+  FastJS.run(foo, `void main(void) {
     commit(read() * ${nFactor}.);
   }`);
 
@@ -70,7 +68,7 @@ if (turbojs) {
 
 The console should now display `[0, 4, 8, 12, 16]`. That was easy, wasn't it? Let's break done what we've done:
 
-- `turbojs.run`'s first parameter is the previously allocated memory. The second parameter is the code that will be executed for each value in the array.
+- `FastJS.run`'s first parameter is the previously allocated memory. The second parameter is the code that will be executed for each value in the array.
 - The code is written in an extension of C called GLSL. If you are not familiar with it, there is some good documentation on the internet. If you know C (or JS and know what types are), you'll pick it up in no time.
 - The kernel code here consists just of the main function, which takes no parameters. However, kernels can have any number of functions (except zero).
 - The `read()` function reads the current input value.
@@ -110,7 +108,7 @@ commit(vec4(foo.r, foo.g, 0., 0.));
 commit(vec4(foo.rg, 0., 0.));
 ```
 
-So we'll use that right now. If you visit the website mentioned above, you will get results from a simple benchmark comparing JS to JS + turbo.js. The benchmark calculates random points on a mandelbrot fractal. Let's break down what happens there, starting with the JavaScript code:
+So we'll use that right now. If you visit the website mentioned above, you will get results from a simple benchmark comparing JS to JS + Fast.js. The benchmark calculates random points on a mandelbrot fractal. Let's break down what happens there, starting with the JavaScript code:
 
 For each run, the first two values of each `vec4` of the allocated memory are filled with random coordinates as the input for the fractal function:
 
@@ -145,11 +143,11 @@ function testJS() {
 }
 ```
 
-The fractal is calculated to the iteration depth of `sampleIterations`. Now let's take a look at the turbo.js code performing the same task:
+The fractal is calculated to the iteration depth of `sampleIterations`. Now let's take a look at the Fast.js code performing the same task:
 
 ```js
-function testTurbo() {
-	turbojs.run(testData, `void main(void) {
+function testFast() {
+	FastJS.run(testData, `void main(void) {
 		vec4 ipt = read();
 
 		float x0 = -2.5 + (3.5 * ipt.r);
@@ -175,14 +173,14 @@ Notice how easy the JS code can be translated to GLSL and vice versa, as long as
 
 ### Example 3: Debugging
 
-GLSL code is compiled by your GPU vendor's compiler. Usually these compilers provide verbose error information. You can catch compile-time errors by catching exceptions thrown by turbo.js. As an example, consider this invalid code:
+GLSL code is compiled by your GPU vendor's compiler. Usually these compilers provide verbose error information. You can catch compile-time errors by catching exceptions thrown by Fast.js. As an example, consider this invalid code:
 
 ```js
-if (turbojs) {
-  var foo = turbojs.alloc(1e6);
+if (FastJS) {
+  var foo = FastJS.alloc(1e6);
   var nFactor = 4;
 
-  turbojs.run(foo, `void main(void) {
+  FastJS.run(foo, `void main(void) {
     commit(${nFactor}. + bar);
   }`);
 }
@@ -194,12 +192,12 @@ This will generate two errors. The first one is `bar` being undefined. The secon
 
 ### Further considerations
 
-- Always provide a JS fallback if you detect that turbo.js is not supported.
+- Always provide a JS fallback if you detect that Fast.js is not supported.
 - Use web workers for huge datasets to prevent the page from blocking.
 - Always warm-up the GPU using dummy data. You won't get the full performance if you don't.
 - In addition to error checking, do a sanity check using a small dataset and a simple kernel. If the numbers don't check out, fall back to JS.
 - I haven't tried it, but I guess you can adapt [glsl-transpiler](https://github.com/stackgl/glsl-transpiler) to create JS fallback code automatically.
-- Consider if you *really* need turbo.js. Optimize your *algorithm* (not code) first. Consider using JS SIMD. turbo.js can't be used for non-parallel workloads.
+- Consider if you *really* need Fast.js. Optimize your *algorithm* (not code) first. Consider using JS SIMD. Fast.js can't be used for non-parallel workloads.
 
 Make sure to familiarize yourself with the GLSL standard, which can be found at [OpenGL.org](https://www.opengl.org/registry/doc/GLSLangSpec.4.40.pdf).
 
